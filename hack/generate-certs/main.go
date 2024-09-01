@@ -128,8 +128,9 @@ func generate() (err error) {
 		return fmt.Errorf("error parsing bind addr: %w", err)
 	}
 
-	if port == "443" {
-		port = ""
+	advertisedApiUrl := "https://" + cfg.Host
+	if port != "443" {
+		advertisedApiUrl += ":" + port
 	}
 
 	data := struct {
@@ -137,6 +138,7 @@ func generate() (err error) {
 		Auth0Domain      string
 		Host             string
 		Port             string
+		AdvertisedApiUrl string
 		Email            string
 		BindAddr         string
 		RegistryMirrors  map[string]string
@@ -146,6 +148,7 @@ func generate() (err error) {
 		Auth0Domain:      cfg.Auth0Domain,
 		Host:             cfg.Host,
 		Port:             port,
+		AdvertisedApiUrl: advertisedApiUrl,
 		Email:            cfg.Email,
 		BindAddr:         cfg.BindAddr,
 		RegistryMirrors:  cfg.RegistryMirrors,
@@ -255,6 +258,10 @@ func (c *cfg) validate() error {
 const composeTemplate = `version: '3.8'
 services:
   omni:
+    ports:
+      - 50180:50180
+      - 8095:8095
+      - {{ .Port }}:{{ .Port }}
     command: >-
       --siderolink-wireguard-advertised-addr 172.20.0.1:50180
       --siderolink-wireguard-bind-addr='0.0.0.0:50180'
@@ -263,7 +270,7 @@ services:
       --auth-auth0-client-id {{ .ClientID }}
       --auth-auth0-domain {{ .Auth0Domain }}
       --initial-users {{ .Email }},test-user@siderolabs.com
-      --advertised-api-url https://{{ .Host }}{{- if .Port -}}:{{- end -}}{{ .Port }}
+      --advertised-api-url {{ .AdvertisedApiUrl }}
       --advertised-kubernetes-proxy-url https://{{ .Host }}:8095/
       --workload-proxying-enabled=true
       --key /etc/ssl/omni-certs/localhost-key.pem

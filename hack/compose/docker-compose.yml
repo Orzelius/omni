@@ -6,7 +6,6 @@
 version: '3.8'
 services:
   omni:
-    network_mode: host
     devices:
       - /dev/net/tun
     depends_on:
@@ -50,7 +49,7 @@ services:
         - TESTPKGS=${TESTPKGS:?error}
         - GO_LDFLAGS=${GO_LDFLAGS}
     environment:
-      - VAULT_ADDR=http://127.0.0.1:8200
+      - VAULT_ADDR=http://vault-dev:8200
       - VAULT_TOKEN=dev-o-token
       - SIDEROLINK_DEV_JOIN_TOKEN=w7uVuW3zbVKIYQuzEcyetAHeYMeo5q2L9RvkAVfCfSCD
 
@@ -62,7 +61,7 @@ services:
     cap_add:
       - IPC_LOCK
     ports:
-      - "127.0.0.1:8200:8200"
+      - "8200:8200"
 
   vault-startup:
     depends_on:
@@ -83,21 +82,22 @@ services:
       || sleep 15 && exit 1
 
   node-dev:
-    network_mode: host
     container_name: local-node
     image: oven/bun:alpine
     volumes:
       - ../../frontend:/app:rw
     working_dir: /app
-    command: sh -c 'bun install && bun run serve'
+    command: sh -c 'bun install && bun run serve -- --host 0.0.0.0'
     stop_signal: SIGKILL
+    ports:
+      - "8121:8121"
 
   minio-server:
     image: minio/minio:latest
     volumes:
       - minio:/minio-server
     ports:
-      - "127.0.0.1:9000:9000"
+      - "9000:9000"
     environment:
       MINIO_ACCESS_KEY: access
       MINIO_SECRET_KEY: secret123
