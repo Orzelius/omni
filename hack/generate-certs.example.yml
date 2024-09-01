@@ -14,6 +14,8 @@ pprof-bind-addr: 0.0.0.0:2135
 
 # auth0 client id and domain is used to enable authentication flow
 # you can create a free dev account in Auth0 and create an app there
+# make sure to add your hosts to the allowed callback URLs list
+# for example, for "localhost" add "https://localhost"
 # client-id: <client-id>
 # auth0-domain: <auth0-domain>
 
